@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Escalera Ascendente",
+      "hasCanvas": false,
+      "bodyTextLen": 59,
+      "bodyTextHash": "c15a7e9babf973f4117a33ee7022e994bed2514879ec5e5f60e467e62eec2c35",
+      "bodyTextPrefix": "META 250,000 CUP La escalera ascendente Abriendo tu subida…",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Escalera Ascendente",
+      "hasCanvas": false,
+      "bodyTextLen": 351,
+      "bodyTextHash": "1ec9c452af3ae19f4b64ef3f869fabc3f44768be67bef073ad1c5c594d82eb95",
+      "bodyTextPrefix": "PLAN DE AHORRO La escalera ascendente Empiezas suave y subes 400",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
