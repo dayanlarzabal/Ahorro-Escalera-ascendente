@@ -1,236 +1,102 @@
 ---
-name: video2dsprite
+name: og
 description: >
-  Grok Build only. Turn a 2D character still into denser animation sprites via
-  imagine_text_to_image base → imagine_image_to_video (6s/10s run-in-place) → ffmpeg
-  frames → magenta chroma-key → dense sampled strips/grids/GIFs. Use when the
-  user wants video-to-sprite, smoother run/walk cycles, or denser intermediate
-  poses. Prefer generate2dsprite for crisp production pixel sheets. Triggers on
-  "video to sprite", "imagine_image_to_video sprite", "dense walk cycle", "smooth run
-  animation from video".
+  Share-link previews and app identity for apps on *.grok.me: the injector-owned
+  og:image card, the SVG favicon, and PWA icons for installable apps.
+  Use when scaffolding, renaming, or restyling the app — and for share /
+  unfurl / OG / Twitter card questions. A custom 1200×630 card from the app's
+  own art is the default — games of every kind (DOM board/word games
+  included), whimsical apps, creative tools, and brand-forward pages; only
+  plain utilities keep the placeholder. Always run the brand-asset pass as a
+  `task` subagent and never wait for it.
+  Triggers on "share", "rename", "app name", "OG", "Open Graph",
+  "twitter card", "unfurl", "og:image", "og:type", "x:game:image",
+  "x-banner", "link preview", "social card", "thumbnail", "preview image",
+  "favicon", "app icon", "PWA", "manifest", "installable", "home screen",
+  "SEO", "meta description".
 metadata:
-  short-description: "Video→dense sprites (imagine_image_to_video + chroma postprocess)"
+  short-description: "Brand assets: og.jpg card, X feed banner, SVG favicon, PWA icons — always a non-blocking `task` subagent"
 user-invocable: false
 ---
 
-# Video2dsprite (Grok Build only)
+# Share cards, favicon, and app icons
 
-Convert a **base 2D character image** into **dense animation sprites** using Grok Build's native video tools.
+A deployed app (`https://{name}.grok.me`) unfurls with a 1200×630 card; every app (preview included) shows a
+favicon in the tab. **Share-card `<meta>` tags are not authored in `__root.tsx`** — the injector
+(`scripts/grok-pwa-shared.mjs`) overwrites `og:*` and `twitter:card` on every HTML response. Identity data is
+the only thing anyone writes, and the pass writes all of it — dispatching, you seed none of it:
 
-## App-builder / Grok environment
+- `src/lib/og/site.json` — not pre-seeded, created only if needed: `{ "title", "type"?: "x:game", "card"?: "custom", "color"?: "RRGGBB" }`; title defaults to the host slug.
+- `public/og.jpg` — custom 1200×630 card (optional; placeholder otherwise)
+- `public/x-banner.jpg` — games only: 50:11 (1200×264) X feed card
+- `public/favicon.svg` — linked from root `head()`; until the pass lands the tab just shows the browser default, which fails nothing
 
-| Item | Value |
-| --- | --- |
-| Skill dir | `.grok/skills/video2dsprite/` |
-| Scripts | `python3 .grok/skills/video2dsprite/scripts/video2dsprite.py …` |
-| Video tools | `imagine_image_to_video` — animate one base `file_path` (verify present) |
-| Inspect | `read_file` on stills/frames; report paths for videos |
-| Deps | ffmpeg + Pillow + numpy (preinstalled in app-builder image) |
-| Output home | `assets/sprites/video2dsprite/<name>/` under `/workspace` |
-| Default | Prefer **`generate2dsprite`** for production heroes; this is the denser-motion path |
+**Extend `__root.tsx`; never replace it wholesale** (auth SSR, redesigns, skill excerpts): dropping the
+favicon link ships a blank tab icon no local check catches.
 
-```text
-base still → imagine_image_to_video (in-place motion) → extract frames → chroma key → sample/normalize → strip / grid / GIF
-```
+## Decide: which card this app gets
 
-## Platform gate (read first)
+**Default: a custom card** from the app's own art — games of every kind and rendering tech (Canvas/WebGL *and*
+DOM board, card, word, puzzle, quiz: a tic-tac-toe grid of divs is still a game), whimsical apps, creative
+tools, content- and brand-forward pages. **When in doubt, make the custom card.**
 
-| Runtime | Supported? |
-| --- | --- |
-| **Grok Build** (xAI) | **Yes** — requires an image generator + an image→video tool |
-| Codex / Claude / other agents | **No** — they lack Grok video tools. Tell the user this skill is Grok Build only and offer `$generate2dsprite` instead |
+**Plain utility apps only** (converters, CRUD trackers, dashboards, notes/admin — apps whose face is the data)
+keep the default `og.grok.me` placeholder: no `public/og.jpg`. Its URL, the `"color"` knob and the rename
+rule: `references/placeholder-card.md`.
 
-**Gate on the capability, not the exact tool name.** Image generation appears
-as `imagine_text_to_image` / `imagine_image_to_image`; video as `imagine_image_to_video`
-or (legacy) `generate_video`. Use whichever pair your tool list has. Stop and
-explain only when you have no image→video tool at all. Do not fake motion with
-code-drawn frames.
+## `og:type` for games
 
-This skill is an **optional denser-motion path**. It does **not** replace `$generate2dsprite`:
+**A game of any kind** carries `"type": "x:game"` in `src/lib/og/site.json` — the pass writes it, owning that
+file. No hostname, never gated on a custom card, never "corrected" to `website`, bare `game`, `twitter:card`
+or an invented `x:type`: X's pipeline keys off that exact value. Non-games omit it. Your check, not your
+edit — missing it, or missing `public/x-banner.jpg` once a custom card exists, is a **BRAND WARNING**.
 
-| Use `$generate2dsprite` when… | Use `$video2dsprite` when… |
-| --- | --- |
-| Crisp pixel sheets, fixed grids, identity-critical heroes | User wants denser intermediate poses / smoother feeling loops |
-| Attack/cast body sheets, prop packs, engine atlases | Experimenting with video-sourced run/walk/idle motion |
-| Production default for most game sprites | User explicitly asks for video → frames → sprites |
+## Brand-asset pass: always a subagent, never waited for
 
-Video softens pixels, drifts identity, and leaves chroma fringes. Always QC; for production heroes, prefer `$generate2dsprite` unless the user wants the video look.
+**Have the `task` tool? Dispatch this pass as a subagent and never generate card art yourself** — inline it
+puts minutes of generation latency in front of the user. As soon as name and palette settle (AGENTS.md §
+"Parallel work"), dispatch this prompt verbatim. It is complete — do not open the references below to
+enrich it; the pass reads them itself:
 
-## Parameters
+> You are the brand-asset pass. Follow the `og` skill, which tells you where to start. App `<NAME>`,
+> `og:type` `<TYPE>`, palette `<PALETTE>`. You solely own `public/` brand assets and `src/lib/og/site.json`.
 
-Infer from the user request:
+Keep building. Stay sequential only if the user is art-directing or the art to reuse doesn't exist yet.
 
-- `subject`: character / creature description, or path to existing still
-- `action`: `run` | `walk` | `idle` | `attack` | custom motion phrase
-- `view`: usually `side` (side-scroller). `topdown` is harder — warn and keep camera locked
-- `duration`: `6` (default) or `10` seconds
-- `frame_counts`: which denser sets to export, default `8,16,24,48`
-- `cell_size`: output sprite cell, default `128`
-- `anchor`: `feet` (default for side locomotion) | `center`
-- `bg`: solid `#FF00FF` (required for chroma)
-- `name`: output slug
-- `out_dir`: working folder (default `./sprites/video2dsprite/<name>/` or project-relative)
+**Never wait for it.** No `wait_tasks`, and **never `get_task_output` on the brand task**: reading a task's
+output consumes it, and a consumed task sends no completion notification, so the card's result — a failure
+included — would reach nobody. Answer as soon as the app renders; the pass wakes you later, and that turn is
+**one short sentence at most** — one that asks for a republish, since `public/og.jpg` ships in the build
+and a card that lands after a publish never reaches the live app on its own:
+"Added the share card — publish again if you already did." / "The card failed; the default one stands."
 
-## Agent rules
+While the pass keeps `/workspace/.grok/og-pending` fresh, brand checks say nothing about the card: in flight
+is not a finding. The marker goes stale after 10 minutes, so a very long pass lets the warning through — but
+a brand warning while it runs is never a cue to redo its work.
 
-1. **Grok-only.** Refuse on non-Grok runtimes with a short explanation + `$generate2dsprite` alternative.
-2. **Still → video, never text-to-video alone.** Stage frame 1 as a clean still with `imagine_text_to_image` (from a prompt, or from a reference `file_path`). Then call `imagine_image_to_video` with that still's `file_path`.
-3. **In-place motion.** Prompt for run/walk **in place** facing a fixed direction. No camera pan, no background scroll, no scene change. Subject stays roughly centered.
-4. **Solid magenta background** on the base and preserved in the video prompt (`#FF00FF` / pure magenta). Required for flood-fill chroma.
-5. **Do not invent art with PIL/Canvas.** Base art comes from `imagine_text_to_image` or a user/local still. Scripts only postprocess.
-6. **Do not put experimental outputs into the game** unless the user asks to integrate.
-7. **Prefer one locomotion cycle for game use.** Dense sample across a full 6s multi-cycle clip is fine for previews; for engine sheets, optionally re-sample a single cycle (12–16 frames) after visual QC.
-8. **Report absolute paths** of video, cleaned frames, strips, and preview GIFs when done.
+**No `task` tool? Then you are the pass** — build the assets now; nothing else will. Whoever runs it claims
+that marker, stages files under `/workspace/.grok/` — never inside `public/`, which `vite build` copies
+verbatim into the deployed app — hands it over with `scripts/write-atomic.mjs` so no build reads half a JPEG,
+and self-checks with `node scripts/brand-check.mjs --game`.
 
-## Workflow
+## Build the assets — the pass reads these, the parent does not
 
-### 1. Plan
+**Dispatching? Do not open them** — the prompt above is complete. One read carries this procedure in your
+context every later turn while the subagent does the work anyway.
 
-Pick the smallest useful run:
+**You are the pass?** Start at `references/brand-pass.md`, then read
+per asset you owe: `references/custom-card.md` for `public/og.jpg`, `references/x-banner.md` for the
+games-only `public/x-banner.jpg`, `references/favicon-and-icons.md` for `public/favicon.svg` plus the PWA
+raster icons — those only when the user asked for installable/PWA, never invent a manifest. **Hand-author
+that SVG, never `imagine_text_to_image`**: it must stay crisp at 16px. Writing `site.json` for a game?
+`references/og-type-contract.md` argues the spellings X rejects.
 
-- Side-view run/walk loop → this skill
-- Multi-action hero kit → still use `$generate2dsprite` per action; only use video for locomotion if requested
-- FX / projectile / prop packs → `$generate2dsprite`, not video
+Regenerate on rename or a material identity change — `APP_NAME`, the `site.json` `title` and the baked-in card
+title move together. Without `imagine_text_to_image` or the xAI Images API, keep the `og.grok.me` card; never
+ship a broken `og:image` URL.
 
-Create:
+## Not supported
 
-```text
-<out_dir>/
-  base/
-  video/
-  frames-raw/
-  frames-clean/
-  sprite/          # default 8-frame set + denser x16/x24/x48
-  prompt-used.txt
-  pipeline-meta.json
-  README.txt
-```
-
-### 2. Build the base still
-
-Options:
-
-- **A. Existing sprite:** read the image, composite onto solid `#FF00FF` if needed, then pass that sandbox path to `imagine_image_to_image` / `imagine_image_to_video`
-- **B. New character:** `imagine_text_to_image` with solid magenta background, full body, side view, centered
-- **C. Match reference:** `imagine_image_to_image` with the reference `file_path`, moving it onto magenta and preserving identity
-
-Base requirements:
-
-- Full body visible, generous magenta margin
-- Side view for run/walk (profile or 3/4 side), feet near bottom third
-- Same art style as the rest of the project when a reference exists
-- No text, UI, watermark, or second character
-
-Copy the returned `file_path` and save as
-`<out_dir>/base/<name>-base.png`; keep the base `file_path` for the video call.
-
-Write the exact image prompt into `prompt-used.txt`.
-
-### 3. Animate with `imagine_image_to_video`
-
-Call Grok `imagine_image_to_video`:
-
-- source path: `<base still file_path>` (sandbox path returned by T2I / I2I)
-- `duration`: `6` (default) or `10`
-- `resolution_name`: `480p` unless user asks `720p`
-- `prompt`: one short present-tense shot (see [references/prompt-rules.md](references/prompt-rules.md))
-
-Mandatory motion constraints in the prompt:
-
-- Subject runs/walks **in place** (treadmill style)
-- Camera **locked** — no pan, zoom, or orbit
-- Background stays **flat solid magenta**
-- Identity, costume, palette stable for the whole shot
-- Single continuous action only
-
-Copy the returned video `file_path` to
-`<out_dir>/video/<name>-<duration>s.mp4`.
-
-If video tools are unavailable, stop (platform gate).
-
-### 4. Extract + chroma + sample (local script)
-
-Run the processor (ffmpeg + Pillow + numpy):
-
-```bash
-python3 .grok/skills/video2dsprite/scripts/video2dsprite.py process \
-  --video <out_dir>/video/<name>-6s.mp4 \
-  --out-dir <out_dir> \
-  --name <name> \
-  --frame-counts 8,16,24,48 \
-  --cell-size 128 \
-  --body-height 100 \
-  --foot-y 118 \
-  --fps 0
-```
-
-Notes:
-
-- `--fps 0` = extract every decoded frame (use source fps)
-- Magenta flood-fill from corners + despill
-- Even sampling for each count in `--frame-counts`
-- Feet-normalized cells, horizontal strip, grid, loop GIF per count
-
-Optional: only re-sample denser sets from existing cleaned frames:
-
-```bash
-python3 .grok/skills/video2dsprite/scripts/video2dsprite.py sample \
-  --clean-dir <out_dir>/frames-clean \
-  --out-dir <out_dir> \
-  --frame-counts 16,24,48 \
-  --cell-size 128
-```
-
-### 5. QC
-
-Visually check:
-
-- [ ] Preview GIF loops without huge pops
-- [ ] Magenta gone (no solid pink blocks); fringe acceptable or re-key
-- [ ] Feet stay on a stable baseline (no hop from bad crop)
-- [ ] Identity roughly stable (face/clothes not morphing every frame)
-- [ ] Action is in-place (not sliding out of frame)
-- [ ] For game use: pick one count (often **16 or 24**) or cut one true cycle
-
-If identity drifts hard or pixels are too soft, fall back to `$generate2dsprite` for production sheets and keep the video set as motion reference only.
-
-### 6. Deliver
-
-Report paths only (unless user asked to wire into a game):
-
-- Video: `video/*.mp4`
-- Dense sprites: `sprite/x16|x24|x48/`
-- Strips / grids / GIFs: `sprite/run-strip-N.png`, `run-grid-N.png`, `run-preview-N.gif`
-- Meta: `pipeline-meta.json`
-
-Do **not** modify game code unless requested.
-
-## Defaults
-
-- Duration: **6s**
-- Action: **side run in place**, facing right
-- Export counts: **8, 16, 24, 48**
-- Cell: **128²**, body height ~100, feet at y≈118
-- Background: **#FF00FF**
-- Prefer single-asset `imagine_image_to_video` over multi-ref (compose multi-ref with `imagine_text_to_image` first if needed)
-
-## Tradeoffs (tell the user once)
-
-**Pros:** denser intermediates → often feels smoother than 4–8 discrete gen poses.  
-**Cons:** softer pixels, identity drift, chroma fringe, multi-cycle 6s clips are not a single perfect loop, heavier assets.  
-**Rule of thumb:** 8→16→24 usually gains smoothness; 48 is often diminishing returns; 145 raw frames are for sampling, not all for runtime.
-
-## Resources
-
-- [references/prompt-rules.md](references/prompt-rules.md) — base still + video prompts
-- [references/pipeline.md](references/pipeline.md) — folder layout, ffmpeg, sampling strategy
-- [scripts/video2dsprite.py](scripts/video2dsprite.py) — extract, chroma, normalize, export
-
-## Relationship to other skills
-
-- `$generate2dsprite` — primary sheet pipeline (Codex + Grok when image gen exists)
-- `$generate2dmap` — maps; not used here
-- `$video2dsprite` — **Grok Build exclusive** motion densification path
-- `$game-asset-core` / `$game-animation-frames` — loop/flip-test/motion laws and
-  engine-ready defaults; still use this skill’s scripts for sandbox execution
-  (magenta base + chroma), not a freeform background color
+No `/api/og` route, no runtime image renderer, no per-route cards — the card is one static site-wide image
+(`public/og.jpg` or the placeholder service). If you add `robots.txt`, never blanket `Disallow: /`: crawlers
+must fetch `/` to read the tags.
